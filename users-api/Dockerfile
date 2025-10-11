@@ -1,15 +1,15 @@
-FROM node:20-alpine
+FROM node:20-slim  <-- CAMBIADO DE alpine a slim
 ENV NODE_ENV=production
 WORKDIR /app
 
 COPY package.json ./
-# AÑADIR esta línea:
 COPY package-lock.json ./ 
 
 RUN npm ci --omit=dev
 
 COPY src ./src
 
-EXPOSE 4001
-ENV PORT=4001 SERVICE_NAME=users-api
+# Cloud Run escucha el puerto 8080 por defecto. 
+EXPOSE 8080
+ENV PORT=8080 SERVICE_NAME=users-api # Cloud Run usará 8080, tu código debe usar process.env.PORT
 CMD ["node", "src/app.js"]

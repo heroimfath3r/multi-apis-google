@@ -1,4 +1,4 @@
-FROM node:20-alpine
+FROM node:20-slim  <-- CAMBIADO DE alpine a slim
 ENV NODE_ENV=production
 WORKDIR /app
 
@@ -10,6 +10,7 @@ RUN npm ci --omit=dev
 
 COPY src ./src
 
-EXPOSE 4002
-ENV PORT=4002 SERVICE_NAME=products-api
+# Cloud Run escucha el puerto 8080 por defecto. Es mejor usar $PORT en app.js y mapear aquí
+EXPOSE 8080 
+ENV PORT=8080 SERVICE_NAME=products-api
 CMD ["node", "src/app.js"]
