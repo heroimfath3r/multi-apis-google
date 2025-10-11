@@ -11,5 +11,5 @@ COPY src ./src
 
 # Cloud Run escucha el puerto 8080 por defecto. 
 EXPOSE 8080
-ENV PORT=8080 SERVICE_NAME=users-api # Cloud Run usará 8080, tu código debe usar process.env.PORT
+ENV PORT=8080 SERVICE_NAME=users-api
 CMD ["node", "src/app.js"]
