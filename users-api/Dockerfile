@@ -1,4 +1,4 @@
-FROM node:20-slim  <-- CAMBIADO DE alpine a slim
+FROM node:20-slim
 ENV NODE_ENV=production
 WORKDIR /app
 
