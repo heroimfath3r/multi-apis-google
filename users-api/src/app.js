@@ -9,7 +9,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const PORT = process.env.PORT || 4001;
+const PORT = process.env.PORT || 8080;
 const SERVICE = process.env.SERVICE_NAME || "users-api";
 
 // Ruta de Salud
