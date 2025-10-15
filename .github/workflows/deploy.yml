@@ -57,7 +57,8 @@ jobs:
             --platform managed \
             --region us-central1 \
             --allow-unauthenticated \
-            --set-env-vars SERVICE_NAME=users-api
+            --add-cloudsql-instances ${{ secrets.CLOUD_SQL_CONNECTION_NAME }} \
+            --set-env-vars SERVICE_NAME=users-api,DB_HOST=${{ secrets.DB_HOST }},DB_USER=${{ secrets.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }},DB_NAME=${{ secrets.DB_NAME }}
           
           # Capturar la URL del servicio desplegado
           USERS_URL=$(gcloud run services describe users-api \
@@ -90,7 +91,7 @@ jobs:
             --platform managed \
             --region us-central1 \
             --allow-unauthenticated \
-            --set-env-vars SERVICE_NAME=products-api,USERS_API_URL=${{ steps.deploy-users.outputs.users_url }}
+            --set-env-vars SERVICE_NAME=products-api,USERS_API_URL=${{ steps.deploy-users.outputs.users_url }},DB_HOST=${{ secrets.DB_HOST }},DB_USER=${{ secrets.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }},DB_NAME=${{ secrets.DB_NAME }}
           
           # Capturar la URL del servicio desplegado
           PRODUCTS_URL=$(gcloud run services describe products-api \
