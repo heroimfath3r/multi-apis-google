@@ -1,3 +1,4 @@
+# users-api/Dockerfile
 # --- ETAPA 1: BUILD (Instalación de Dependencias) ---
 # Usamos una imagen más robusta para asegurar la instalación
 FROM node:20-slim AS builder 

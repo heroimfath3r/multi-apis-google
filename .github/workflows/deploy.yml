@@ -5,6 +5,11 @@ on:
     branches:
       - main
 
+# Permisos necesarios para la autenticación
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -12,22 +17,96 @@ jobs:
     steps:
       # 1️⃣ Descargar el código del repositorio
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # 2️⃣ Autenticarse en Google Cloud
       - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v2.1.6
         with:
           credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
       # 3️⃣ Configurar el SDK de Google Cloud
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
+        uses: google-github-actions/setup-gcloud@v2.1.2
 
-      # 4️⃣ Constr
+      # 4️⃣ Configurar Docker para usar gcloud como helper de credenciales
+      - name: Configure Docker
+        run: |
+          gcloud auth configure-docker
 
-       
-
+      # ========== USERS API (SE DESPLIEGA PRIMERO) ==========
       
+      # 5️⃣ Construir la imagen Docker de Users API
+      - name: Build Users API Docker image
+        run: |
+          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/users-api:${{ github.sha }} \
+            -f users-api/Dockerfile \
+            ./users-api
+
+      # 6️⃣ Subir la imagen de Users API
+      - name: Push Users API Docker image
+        run: |
+          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/users-api:${{ github.sha }}
+
+      # 7️⃣ Desplegar Users API a Cloud Run
+      - name: Deploy Users API to Cloud Run
+        id: deploy-users
+        run: |
+          gcloud run deploy users-api \
+            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/users-api:${{ github.sha }} \
+            --platform managed \
+            --region us-central1 \
+            --allow-unauthenticated \
+            --set-env-vars SERVICE_NAME=users-api
+          
+          # Capturar la URL del servicio desplegado
+          USERS_URL=$(gcloud run services describe users-api \
+            --platform managed \
+            --region us-central1 \
+            --format 'value(status.url)')
+          
+          echo "users_url=$USERS_URL" >> $GITHUB_OUTPUT
+          echo "✅ Users API desplegada en: $USERS_URL"
+
+      # ========== PRODUCTS API (SE DESPLIEGA DESPUÉS) ==========
+      
+      # 8️⃣ Construir la imagen Docker de Products API
+      - name: Build Products API Docker image
+        run: |
+          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/products-api:${{ github.sha }} \
+            -f products-api/Dockerfile \
+            ./products-api
+
+      # 9️⃣ Subir la imagen de Products API
+      - name: Push Products API Docker image
+        run: |
+          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/products-api:${{ github.sha }}
+
+      # 🔟 Desplegar Products API a Cloud Run (con URL de Users API)
+      - name: Deploy Products API to Cloud Run
+        run: |
+          gcloud run deploy products-api \
+            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/products-api:${{ github.sha }} \
+            --platform managed \
+            --region us-central1 \
+            --allow-unauthenticated \
+            --set-env-vars SERVICE_NAME=products-api,USERS_API_URL=${{ steps.deploy-users.outputs.users_url }}
+          
+          # Capturar la URL del servicio desplegado
+          PRODUCTS_URL=$(gcloud run services describe products-api \
+            --platform managed \
+            --region us-central1 \
+            --format 'value(status.url)')
+          
+          echo "✅ Products API desplegada en: $PRODUCTS_URL"
+          echo "🔗 Products API puede comunicarse con Users API en: ${{ steps.deploy-users.outputs.users_url }}"
+
+      # 1️⃣1️⃣ Mostrar resumen final
+      - name: Deployment Summary
+        run: |
+          echo "=========================================="
+          echo "🎉 DESPLIEGUE COMPLETADO"
+          echo "=========================================="
+          echo "Users API: ${{ steps.deploy-users.outputs.users_url }}"
+          echo "Products API: $(gcloud run services describe products-api --region us-central1 --format 'value(status.url)')"
+          echo "=========================================="

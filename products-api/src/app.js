@@ -10,7 +10,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const PORT = process.env.PORT || 4002;
+const PORT = process.env.PORT || 8080;
 const SERVICE = process.env.SERVICE_NAME || "products-api";
 const USERS_API_URL = process.env.USERS_API_URL || "http://users-api:4001";
 
