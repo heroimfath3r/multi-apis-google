@@ -71,7 +71,7 @@ app.post("/products", async (req, res) => {
 app.delete("/products/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query("DELETE FROM users WHERE id = $1", [id]);
+    const result = await pool.query("DELETE FROM products WHERE id = $1", [id]);
 
     if (result.rowCount === 0) {
       return res.status(404).json({ error: "Product not found" });
