@@ -67,6 +67,23 @@ app.post("/products", async (req, res) => {
   }
 });
 
+// DELETE /users/:id (Ahora elimina de la DB)
+app.delete("/products/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query("DELETE FROM users WHERE id = $1", [id]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    res.json({ message: "Producto eliminado exitosamente", id });
+  } catch (err) {
+    console.error("Error al eliminar producto:", err.stack);
+    res.status(500).json({ error: "Error interno al eliminar el producto." });
+  }
+});
+
 // ... otras rutas (PUT, DELETE si las necesitas)
 
 // Ejemplo de comunicación entre servicios (NO SE MODIFICA LA LÓGICA DE FETCH)
